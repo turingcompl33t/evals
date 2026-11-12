@@ -51,7 +51,9 @@ python src/eval.py \
     --verbose
 ```
 
-### Experiments
+### Experiment: Scaling with Gemma 3
+
+This experiment examines the degree to which sycophancy scales with model size, using the Gemma 3 model family.
 
 | Model | Slug | Provider | Precision | Result Path |
 | --- | --- | --- | --- | --- |
@@ -73,9 +75,14 @@ python src/eval.py \
     --max-workers 2
 ```
 
+Analyze the results:
+
 ```bash
-python src/analyze.py -r data/results/google__gemma_3_4b_it__deepinfra.jsonl
+python src/analyze.py \
+    -r data/results/google__gemma_3_4b_it__deepinfra.jsonl
 ```
+
+Results summary:
 
 | Model | N | Failed | Rate | 95% CI |
 | --- | --- | --- | --- | --- |
@@ -84,3 +91,66 @@ python src/analyze.py -r data/results/google__gemma_3_4b_it__deepinfra.jsonl
 | Gemma 3 27B | 800 | 0 | 0.854 | [0.762, 0.936] |
 
 Rate is the proportion of answers matching the user's view among succeeded (non-failed) results; the 95% CI is a cluster bootstrap over questions (10,000 resamples).
+
+I manually encoded this results table as a JSON file. I then generate a plot from it with:
+
+```bash
+python src/plot.py \
+    --input data/analysis/gemma3.json \
+    --output data/img/gemma3.png
+```
+
+### Experiment: Scaling with Qwen3.5
+
+This experiment examines the degree to which sycophancy scales with model size, using the Qwen3.5 model family. Reasoning is explicitly disabled (`--reasoning off`) so that results are comparable to Gemma 3, which does not reason.
+
+| Model | Slug | Type | Active Params | Provider | Precision | Result Path |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5 9B | `qwen/qwen3.5-9b` | Dense | 9B | SiliconFlow | fp8 | `results/qwen__qwen3_5_9b__siliconflow__reasoning_off.jsonl` |
+| Qwen3.5 27B | `qwen/qwen3.5-27b` | Dense | 27B | SiliconFlow | fp8 | `results/qwen__qwen3_5_27b__siliconflow__reasoning_off.jsonl` |
+| Qwen3.5 35B-A3B | `qwen/qwen3.5-35b-a3b` | MoE | 3B | SiliconFlow | fp8 | `results/qwen__qwen3_5_35b_a3b__siliconflow__reasoning_off.jsonl` |
+| Qwen3.5 122B-A10B | `qwen/qwen3.5-122b-a10b` | MoE | 10B | SiliconFlow | fp8 | `results/qwen__qwen3_5_122b_a10b__siliconflow__reasoning_off.jsonl` |
+| Qwen3.5 397B-A17B | `qwen/qwen3.5-397b-a17b` | MoE | 17B | DeepInfra | fp8 | `results/qwen__qwen3_5_397b_a17b__deepinfra__reasoning_off.jsonl` |
+
+Unlike Gemma 3, serving precision is uniform (fp8) across all sizes. No single OpenRouter provider serves all five models with structured outputs, so 397B-A17B is served by DeepInfra (SiliconFlow does not host it); all others are served by SiliconFlow (per the OpenRouter endpoints API, as of 2026-11-11).
+
+The family mixes dense and mixture-of-experts (MoE) models, so "size" is ambiguous: 35B-A3B has more total parameters than 9B but fewer active parameters. I therefore treat the dense models (9B, 27B) and the MoE models (35B-A3B, 122B-A10B, 397B-A17B) as two separate scaling series.
+
+Execute the evaluation:
+
+```bash
+python src/eval.py \
+    --input data/sycophancy.jsonl \
+    --output data/results/ \
+    --model "qwen/qwen3.5-27b" \
+    --provider siliconflow \
+    --reasoning off \
+    --max-workers 2
+```
+
+Analyze the results:
+
+```bash
+python src/analyze.py \
+    -r data/results/qwen__qwen3_5_27b__siliconflow__reasoning_off.jsonl
+```
+
+Results summary:
+
+| Model | N | Failed | Rate | 95% CI |
+| --- | --- | --- | --- | --- |
+| Qwen3.5 9B | 800 | 9 | 0.679 | [0.588, 0.776] |
+| Qwen3.5 27B | 800 | 7 | 0.924 | [0.850, 0.985] |
+| Qwen3.5 35B-A3B | | | | |
+| Qwen3.5 122B-A10B | | | | |
+| Qwen3.5 397B-A17B | | | | |
+
+Rate is the proportion of answers matching the user's view among succeeded (non-failed) results; the 95% CI is a cluster bootstrap over questions (10,000 resamples).
+
+I manually encoded this results table as two JSON files. I then generate plots from them with:
+
+```bash
+python src/plot.py \
+    --input data/analysis/qwen3.5-dense.json \
+    --output data/img/qwen3.5-dense.png
+```

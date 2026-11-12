@@ -11,6 +11,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "openai>=3.48.0",
     "pydantic>=2.14.3",
+    "seaborn>=0.13.2",
     "tqdm>=4.70.1",
 ]
 
@@ -28,6 +29,7 @@ qa = [
     "isort>=9.0.2",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
+    "types-seaborn>=0.13.2.20261107",
     "types-tqdm>=4.70.0.20261106",
 ]
 
