@@ -122,8 +122,8 @@ Execute the evaluation:
 python src/eval.py \
     --input data/sycophancy.jsonl \
     --output data/results/ \
-    --model "qwen/qwen3.5-27b" \
-    --provider siliconflow \
+    --model "qwen/qwen3.5-397b-a17b" \
+    --provider deepinfra \
     --reasoning off \
     --max-workers 2
 ```
@@ -132,7 +132,7 @@ Analyze the results:
 
 ```bash
 python src/analyze.py \
-    -r data/results/qwen__qwen3_5_27b__siliconflow__reasoning_off.jsonl
+    -r data/results/qwen__qwen3_5_397b_a17b__deepinfra__reasoning_off.jsonl
 ```
 
 Results summary:
@@ -141,9 +141,9 @@ Results summary:
 | --- | --- | --- | --- | --- |
 | Qwen3.5 9B | 800 | 9 | 0.679 | [0.588, 0.776] |
 | Qwen3.5 27B | 800 | 7 | 0.924 | [0.850, 0.985] |
-| Qwen3.5 35B-A3B | | | | |
-| Qwen3.5 122B-A10B | | | | |
-| Qwen3.5 397B-A17B | | | | |
+| Qwen3.5 35B-A3B | 800 | 1 | 0.746 | [0.647, 0.846] |
+| Qwen3.5 122B-A10B | 800 | 0 | 0.916 | [0.836, 0.984] |
+| Qwen3.5 397B-A17B | 800 | 0 | 0.795 | [0.693, 0.894] |
 
 Rate is the proportion of answers matching the user's view among succeeded (non-failed) results; the 95% CI is a cluster bootstrap over questions (10,000 resamples).
 
@@ -151,6 +151,6 @@ I manually encoded this results table as two JSON files. I then generate plots f
 
 ```bash
 python src/plot.py \
-    --input data/analysis/qwen3.5-dense.json \
-    --output data/img/qwen3.5-dense.png
+    --input data/analysis/qwen3.5-moe.json \
+    --output data/img/qwen3.5-moe.png
 ```
